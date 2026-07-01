@@ -158,6 +158,45 @@ function splitLabeledChords(
   return { label: labelParts.join(' ').replace(/:+$/, ''), chords };
 }
 
+const CAPO_FILLER = new Set([
+  'capo', 'on', 'at', 'in', 'to', 'up', 'the', 'fret', 'frets', 'position', 'pos',
+]);
+
+const ROMAN_FRET: Record<string, number> = {
+  i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6,
+  vii: 7, viii: 8, ix: 9, x: 10, xi: 11, xii: 12,
+};
+
+/**
+ * Detect a plain-text capo instruction and return the ChordPro directive:
+ * "Capo on the fret 2" -> "{capo: 2}". Reads Arabic ("2", "2nd") and Roman
+ * ("II") fret numbers. The whole line must be just the instruction, so a lyric
+ * that merely starts with "Capo" is left untouched. (SongbookPro treats {capo}
+ * as import-only metadata; full ChordPro renderers display and use it.)
+ */
+function capoDirective(line: string): string | null {
+  const trimmed = line.trim();
+  if (!/^capo\b/i.test(trimmed)) return null;
+  let fret: number | null = null;
+  for (const raw of trimmed.split(/\s+/)) {
+    const tok = raw.replace(/[.,:;()\-–—]/g, '');
+    if (tok === '') continue;
+    const arabic = tok.match(/^(\d{1,2})(?:st|nd|rd|th)?$/i);
+    if (arabic) {
+      fret = parseInt(arabic[1], 10);
+      continue;
+    }
+    const low = tok.toLowerCase();
+    if (low in ROMAN_FRET) {
+      fret = ROMAN_FRET[low];
+      continue;
+    }
+    if (!CAPO_FILLER.has(low)) return null;
+  }
+  if (fret === null || fret < 1 || fret > 24) return null;
+  return `{capo: ${fret}}`;
+}
+
 export function convert(text: string, opts: ConvertOptions = {}): string {
   const snap = opts.snap ?? true;
   const prog = opts.prog ?? true;
@@ -175,6 +214,12 @@ export function convert(text: string, opts: ConvertOptions = {}): string {
     const section = asSectionHeader(line);
     if (section) {
       res.push(section);
+      continue;
+    }
+
+    const capo = capoDirective(line);
+    if (capo) {
+      res.push(capo);
       continue;
     }
 

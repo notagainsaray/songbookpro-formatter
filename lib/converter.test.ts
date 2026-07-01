@@ -111,6 +111,34 @@ describe('labeled chord lines (section label + chords)', () => {
   });
 });
 
+describe('capo lines', () => {
+  it('converts a plain capo instruction to a {capo} directive', () => {
+    expect(convert('Capo on the  fret 2')).toBe('{capo: 2}');
+  });
+
+  it('reads common capo phrasings', () => {
+    expect(convert('Capo 2')).toBe('{capo: 2}');
+    expect(convert('Capo: 3')).toBe('{capo: 3}');
+    expect(convert('Capo 2nd fret')).toBe('{capo: 2}');
+    expect(convert('Capo on fret 5')).toBe('{capo: 5}');
+    expect(convert('Capo II')).toBe('{capo: 2}');
+  });
+
+  it('is idempotent — an existing {capo} passes through', () => {
+    expect(convert('{capo: 2}')).toBe('{capo: 2}');
+  });
+
+  it('leaves a lyric that merely starts with "Capo" alone', () => {
+    expect(convert('Capo 2 was the best decision')).toBe(
+      'Capo 2 was the best decision',
+    );
+  });
+
+  it('leaves a bare "Capo" with no fret alone', () => {
+    expect(convert('Capo')).toBe('Capo');
+  });
+});
+
 describe('normalizeDirective', () => {
   it('strips a redundant trailing colon and tidies spacing', () => {
     expect(normalizeDirective('{c: Verse 1:}')).toBe('{c: Verse 1}');
