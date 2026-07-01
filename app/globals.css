@@ -1,0 +1,411 @@
+/* Songbook Pro Formatter — styles.
+   A warm theme in two flavours; the chord accent is amber to echo the songbook
+   feel. The input and output panes are monospaced so chord columns line up with
+   the lyrics beneath them. The theme is selected by the data-theme attribute on
+   <html> (set before paint in app/layout.tsx); dark is the default. Class names
+   match app/page.tsx exactly. */
+
+:root {
+  /* Dark theme — the default, and when [data-theme="dark"]. */
+  --bg: #0d1017;
+  --bg-glow: radial-gradient(1200px 620px at 50% -12%, #1a2331 0%, #0d1017 62%);
+  --panel: #141a23;
+  --panel-head: #10151d;
+  --border: #263141;
+  --border-soft: #1d2531;
+  --border-strong: #33445a;
+  --text: #e7edf4;
+  --muted: #93a1b1;
+  --faint: #6b7889;
+  --chord-rgb: 240, 162, 75; /* [Chord] accent as RGB, so tints can share it */
+  --chord: rgb(var(--chord-rgb));
+  --chord-tint: rgba(var(--chord-rgb), 0.14);
+  --primary: #2f81f7;
+  --primary-hover: #4b93ff;
+  --primary-ink: #ffffff;
+  --toast-bg: #0b0e13;
+  --toast-fg: #e7edf4;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  /* Light theme. --chord and --chord-tint derive from --chord-rgb below. */
+  --bg: #f6f7f9;
+  --bg-glow: radial-gradient(1200px 620px at 50% -12%, #ffffff 0%, #eceff3 62%);
+  --panel: #ffffff;
+  --panel-head: #f3f5f8;
+  --border: #dde1e7;
+  --border-soft: #e9ecf0;
+  --border-strong: #c4ccd6;
+  --text: #171d27;
+  --muted: #566173;
+  --faint: #8590a0;
+  --chord-rgb: 176, 84, 12; /* deeper amber for contrast on white */
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --toast-bg: #1b2431;
+  --toast-fg: #f6f7f9;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--bg-glow), var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Layout shell */
+.wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 56px 24px 96px;
+}
+
+/* Header */
+.eyebrow {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+h1 {
+  margin: 0 0 14px;
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+h1 .b {
+  color: var(--chord);
+}
+
+h1 .dot-sep {
+  margin: 0 0.18em;
+  color: var(--faint);
+}
+
+.sub {
+  margin: 0 0 28px;
+  max-width: 68ch;
+  color: var(--muted);
+  font-size: 15.5px;
+}
+
+/* Controls row */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease,
+    color 120ms ease, transform 60ms ease;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--primary-hover);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-ink);
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.btn-ghost:hover {
+  background: var(--panel);
+  border-color: var(--border-strong);
+}
+
+/* Toggle chips */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.chip:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--primary-hover);
+  outline-offset: 2px;
+}
+
+.chip .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--faint);
+  transition: background 120ms ease, box-shadow 120ms ease;
+}
+
+.chip[aria-pressed="true"] {
+  color: var(--text);
+  border-color: rgba(var(--chord-rgb), 0.5);
+  background: var(--chord-tint);
+}
+
+.chip[aria-pressed="true"] .dot {
+  background: var(--chord);
+  box-shadow: 0 0 0 3px rgba(var(--chord-rgb), 0.18);
+}
+
+/* Editor grid */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 760px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 420px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 15px;
+  background: var(--panel-head);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.lbl {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.count {
+  font-size: 12px;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+
+textarea,
+pre {
+  flex: 1;
+  margin: 0;
+  padding: 16px 18px;
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+}
+
+textarea {
+  width: 100%;
+  resize: none;
+  outline: none;
+  tab-size: 4;
+}
+
+textarea::placeholder {
+  color: var(--faint);
+}
+
+pre {
+  overflow: auto;
+  white-space: pre;
+}
+
+pre .empty {
+  color: var(--faint);
+  font-style: italic;
+}
+
+pre .c {
+  color: var(--chord);
+  font-weight: 600;
+}
+
+/* Footer note — a prominent caution callout: mistakes can happen, so make it
+   hard to miss. */
+.note {
+  position: relative;
+  margin-top: 28px;
+  padding: 16px 18px 16px 48px;
+  border: 1px solid rgba(var(--chord-rgb), 0.5);
+  border-left: 4px solid var(--chord);
+  border-radius: var(--radius-sm);
+  background: rgba(var(--chord-rgb), 0.11);
+  box-shadow: 0 8px 26px rgba(var(--chord-rgb), 0.08);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.note::before {
+  content: "⚠";
+  position: absolute;
+  left: 17px;
+  top: 15px;
+  font-size: 19px;
+  line-height: 1;
+  color: var(--chord);
+}
+
+.note b {
+  color: var(--chord);
+  font-weight: 700;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--toast-bg);
+  border: 1px solid var(--border);
+  color: var(--toast-fg);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  z-index: 50;
+}
+
+.toast.show {
+  animation: toast-in 160ms ease-out;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* Theme toggle (dark / light) */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.theme-toggle:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+  background: var(--panel);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--primary-hover);
+  outline-offset: 2px;
+}
+
+.theme-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Show the sun in dark mode (click for light) and the moon in light mode. */
+.theme-toggle .icon-moon {
+  display: none;
+}
+
+:root[data-theme="light"] .theme-toggle .icon-sun {
+  display: none;
+}
+
+:root[data-theme="light"] .theme-toggle .icon-moon {
+  display: block;
+}

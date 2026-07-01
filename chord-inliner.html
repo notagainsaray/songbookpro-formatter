@@ -1,0 +1,276 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Songbook Pro - Parser</title>
+<style>
+  :root{
+    --bg:#17140f; --panel:#211d16; --panel2:#2a2519; --line:#3a3327;
+    --ink:#ece4d4; --muted:#9a8f79; --chord:#e6a94e; --chordbg:rgba(230,169,78,.12);
+    --radius:10px;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--mono);
+    line-height:1.5; padding:32px 20px 56px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1120px; margin:0 auto}
+
+  .eyebrow{
+    font-size:11px; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--muted); margin:0 0 10px;
+  }
+  h1{
+    font-size:clamp(28px,5vw,42px); letter-spacing:.02em; font-weight:700;
+    margin:0 0 8px; text-transform:uppercase;
+  }
+  h1 .b{color:var(--chord)}
+  .sub{color:var(--muted); font-size:14px; margin:0 0 26px; max-width:62ch}
+
+  .controls{
+    display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:18px;
+  }
+  button{font-family:var(--mono); cursor:pointer; border:none}
+  .btn{
+    padding:9px 16px; border-radius:8px; font-size:13px; font-weight:700;
+    letter-spacing:.02em; transition:filter .15s ease, background .15s ease;
+  }
+  .btn-primary{background:var(--chord); color:#241a08}
+  .btn-primary:hover{filter:brightness(1.08)}
+  .btn-ghost{background:transparent; color:var(--ink); border:1px solid var(--line)}
+  .btn-ghost:hover{background:var(--panel2)}
+  .btn:focus-visible,.chip:focus-visible{outline:2px solid var(--chord); outline-offset:2px}
+
+  .spacer{flex:1 1 auto; min-width:12px}
+
+  .chip{
+    display:inline-flex; align-items:center; gap:8px; padding:8px 12px;
+    border:1px solid var(--line); background:var(--panel); color:var(--muted);
+    border-radius:8px; font-size:12px; letter-spacing:.02em; transition:.15s ease;
+  }
+  .chip[aria-pressed="true"]{color:var(--ink); border-color:var(--chord)}
+  .dot{width:9px; height:9px; border-radius:3px; background:var(--line); transition:.15s ease}
+  .chip[aria-pressed="true"] .dot{background:var(--chord)}
+
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+  @media (max-width:760px){ .grid{grid-template-columns:1fr} }
+
+  .pane{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    display:flex; flex-direction:column; min-height:320px; overflow:hidden;
+  }
+  .pane-head{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:11px 14px; border-bottom:1px solid var(--line); background:var(--panel2);
+  }
+  .pane-head .lbl{font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted)}
+  .pane-head .count{font-size:11px; color:var(--muted)}
+
+  textarea, pre{
+    font-family:var(--mono); font-size:13px; line-height:1.7;
+    background:transparent; color:var(--ink); margin:0; border:none;
+    padding:16px 14px; width:100%; flex:1 1 auto; tab-size:2;
+  }
+  textarea{resize:vertical; min-height:260px; outline:none}
+  textarea::placeholder{color:var(--muted); opacity:.7}
+  pre{overflow:auto; white-space:pre; min-height:260px}
+  pre .c{color:var(--chord); background:var(--chordbg); border-radius:3px; padding:0 1px}
+  pre .empty{color:var(--muted)}
+
+  .note{
+    margin-top:20px; padding:13px 15px; border-left:2px solid var(--line);
+    background:var(--panel); border-radius:0 8px 8px 0; color:var(--muted);
+    font-size:12.5px; line-height:1.65;
+  }
+  .note b{color:var(--ink); font-weight:700}
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--chord); color:#241a08; padding:9px 18px; border-radius:8px;
+    font-size:13px; font-weight:700; opacity:0; pointer-events:none;
+    transition:opacity .2s ease, transform .2s ease;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important} }
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Mince Pie Studios · Chart Tools</p>
+  <h1>Songbook <span class="b">Pro</span> · Parser</h1>
+  <p class="sub">Paste a chart with chords sitting above the lyrics. It rewrites every chord inline as <span style="color:var(--chord)">[Chord]</span>, right before the syllable it lands on, following SongbookPro's ChordPro rules. Section headers are normalised to <span style="color:var(--chord)">{c: Name}</span>. Lines already in ChordPro form pass straight through.</p>
+
+  <div class="controls">
+    <button class="btn btn-primary" id="run">Convert</button>
+    <button class="btn btn-ghost" id="copy">Copy output</button>
+    <div class="spacer"></div>
+    <button class="chip" id="snap" aria-pressed="true"><span class="dot"></span>Snap to nearest word</button>
+    <button class="chip" id="prog" aria-pressed="true"><span class="dot"></span>Bracket chord-only lines</button>
+  </div>
+
+  <div class="grid">
+    <div class="pane">
+      <div class="pane-head"><span class="lbl">Input</span><span class="count" id="inCount">0 lines</span></div>
+      <textarea id="in" spellcheck="false" placeholder="Paste your chart here, e.g.
+
+        C            G
+Here is a little sample
+        Am           F
+showing how the chords land"></textarea>
+    </div>
+    <div class="pane">
+      <div class="pane-head"><span class="lbl">Output</span><span class="count" id="outCount">0 lines</span></div>
+      <pre id="out"><span class="empty">Converted chart appears here.</span></pre>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Two things to eyeball.</b> Chord charts align by eye, so a chord occasionally lands a syllable off. Turn off "snap" for exact column placement instead. And a performance note in a chord row, such as "play twice", needs bracketing by hand as an inline comment, either on its own as <span style="color:var(--chord)">[play twice]</span> or folded into a chord as <span style="color:var(--chord)">[Dm7 (play twice)]</span>. Lines with a mismatched bracket are left untouched rather than guessed at.
+  </div>
+</div>
+
+<div class="toast" id="toast">Copied</div>
+
+<script>
+(function(){
+  var CHORD_RE = /^[A-G](#|b)?(m|maj|min|dim|aug|sus|add|M)?\d*(sus\d)?(add\d)?(\/[A-G](#|b)?)?$/i;
+
+  function cols(line){
+    var out=[], re=/\S+/g, m;
+    while((m=re.exec(line))!==null) out.push([m.index, m[0]]);
+    return out;
+  }
+  function isChordOnly(line){
+    var t = line.replace(/,/g,' ').trim().split(/\s+/).filter(Boolean);
+    if(!t.length) return false;
+    return t.every(function(x){ return CHORD_RE.test(x); });
+  }
+  function isDirective(line){ return /^\s*\{.*\}\s*$/.test(line); }
+  function hasInline(line){ return /\[[^\]]+\]/.test(line); }
+
+  // Normalise section headers to the canonical SongbookPro form: {c: Name}
+  // with a single space after the colon and no redundant trailing colon.
+  // All other directives (title, artist, key, etc.) are left untouched.
+  function normalizeDirective(line){
+    var m = line.match(/^\s*\{\s*(c|comment)\s*:\s*(.*?)\s*\}\s*$/i);
+    if(!m) return line;
+    var name = m[2].replace(/[:\s]+$/, '');
+    return '{' + m[1].toLowerCase() + ': ' + name + '}';
+  }
+
+  function mergePair(chordLine, lyricLine, snap){
+    var chords = cols(chordLine);
+    var starts = cols(lyricLine).map(function(x){ return x[0]; });
+    var groups = {}, order = [];
+    chords.forEach(function(pair){
+      var col = pair[0], ch = pair[1], target;
+      if(snap && starts.length){
+        target = starts.reduce(function(best, s){
+          var d = Math.abs(s-col), bd = Math.abs(best-col);
+          if(d < bd) return s;
+          if(d === bd) return (s >= col ? s : best);
+          return best;
+        }, starts[0]);
+      } else {
+        target = col;
+      }
+      if(!(target in groups)){ groups[target] = []; order.push(target); }
+      groups[target].push('['+ch+']');
+    });
+    var out = lyricLine;
+    order.sort(function(a,b){ return b-a; });
+    order.forEach(function(idx){
+      var tag = groups[idx].join('');
+      if(idx > out.length) out = out + Array(idx-out.length+1).join(' ');
+      out = out.slice(0,idx) + tag + out.slice(idx);
+    });
+    return out;
+  }
+
+  function bracketProg(line){
+    var t = line.replace(/,/g,' ').trim().split(/\s+/).filter(Boolean);
+    return t.map(function(c){ return '['+c+']'; }).join(' ');
+  }
+
+  function convert(text, opts){
+    var lines = text.replace(/\r/g,'').split('\n');
+    var res = [];
+    for(var i=0;i<lines.length;i++){
+      var line = lines[i];
+      if(isDirective(line)){ res.push(normalizeDirective(line)); continue; }
+      if(hasInline(line)){ res.push(line); continue; }
+      if(isChordOnly(line)){
+        var nxt = (i+1 < lines.length) ? lines[i+1] : '';
+        var nextIsLyric = nxt.trim()!=='' && !isDirective(nxt) && !isChordOnly(nxt) && !hasInline(nxt);
+        if(nextIsLyric){
+          res.push(mergePair(line, nxt, opts.snap));
+          i++;
+        } else {
+          res.push(opts.prog ? bracketProg(line) : line);
+        }
+        continue;
+      }
+      res.push(line);
+    }
+    return res.join('\n');
+  }
+
+  var inEl = document.getElementById('in');
+  var outEl = document.getElementById('out');
+  var inCount = document.getElementById('inCount');
+  var outCount = document.getElementById('outCount');
+  var lastRaw = '';
+
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function colorize(s){ return esc(s).replace(/\[[^\]]+\]/g, function(m){ return '<span class="c">'+m+'</span>'; }); }
+  function lineWord(n){ return n + (n===1 ? ' line' : ' lines'); }
+
+  function run(){
+    var raw = convert(inEl.value, {
+      snap: document.getElementById('snap').getAttribute('aria-pressed')==='true',
+      prog: document.getElementById('prog').getAttribute('aria-pressed')==='true'
+    });
+    lastRaw = raw;
+    if(raw.trim()===''){
+      outEl.innerHTML = '<span class="empty">Converted chart appears here.</span>';
+      outCount.textContent = '0 lines';
+    } else {
+      outEl.innerHTML = colorize(raw);
+      outCount.textContent = lineWord(raw.split('\n').length);
+    }
+  }
+
+  inEl.addEventListener('input', function(){
+    var v = inEl.value;
+    inCount.textContent = lineWord(v.trim()==='' ? 0 : v.split('\n').length);
+  });
+
+  document.getElementById('run').addEventListener('click', run);
+
+  [['snap'],['prog']].forEach(function(id){
+    var el = document.getElementById(id[0]);
+    el.addEventListener('click', function(){
+      el.setAttribute('aria-pressed', el.getAttribute('aria-pressed')==='true' ? 'false' : 'true');
+      if(lastRaw || inEl.value.trim()) run();
+    });
+  });
+
+  var toast = document.getElementById('toast');
+  function ping(msg){
+    toast.textContent = msg; toast.classList.add('show');
+    setTimeout(function(){ toast.classList.remove('show'); }, 1400);
+  }
+  document.getElementById('copy').addEventListener('click', function(){
+    var text = lastRaw || '';
+    if(!text.trim()){ ping('Nothing to copy'); return; }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){ ping('Copied'); }, function(){ fallback(text); });
+    } else { fallback(text); }
+  });
+  function fallback(text){
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); ping('Copied'); }catch(e){ ping('Copy failed'); }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
