@@ -139,6 +139,43 @@ describe('capo lines', () => {
   });
 });
 
+describe('punctuation and bare section labels', () => {
+  it('brackets a comma-separated chord line with a trailing period', () => {
+    expect(convert('DbMaj7, Cm7, Bbm7, AbMaj7, C7.')).toBe(
+      '[DbMaj7] [Cm7] [Bbm7] [AbMaj7] [C7]',
+    );
+  });
+
+  it('formats bare section labels on their own line', () => {
+    expect(convert('Verse')).toBe('{c: Verse}');
+    expect(convert('Pre-Chorus')).toBe('{c: Pre-Chorus}');
+    expect(convert('Chorus:')).toBe('{c: Chorus}');
+    expect(convert('Verse 2')).toBe('{c: Verse 2}');
+  });
+
+  it('leaves a non-label single word alone', () => {
+    expect(convert('Hello')).toBe('Hello');
+  });
+
+  it('handles a full lead sheet of sections and chord rows', () => {
+    const input = [
+      'Verse',
+      'DbMaj7, Cm7, Bbm7, AbMaj7, C7.',
+      '',
+      'Pre-Chorus',
+      'Bbm7, Cm7, DbMaj7, Dbm6 C7.',
+    ].join('\n');
+    const expected = [
+      '{c: Verse}',
+      '[DbMaj7] [Cm7] [Bbm7] [AbMaj7] [C7]',
+      '',
+      '{c: Pre-Chorus}',
+      '[Bbm7] [Cm7] [DbMaj7] [Dbm6] [C7]',
+    ].join('\n');
+    expect(convert(input)).toBe(expected);
+  });
+});
+
 describe('normalizeDirective', () => {
   it('strips a redundant trailing colon and tidies spacing', () => {
     expect(normalizeDirective('{c: Verse 1:}')).toBe('{c: Verse 1}');

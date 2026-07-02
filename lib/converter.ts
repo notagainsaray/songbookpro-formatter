@@ -18,10 +18,14 @@ function cols(line: string): Array<[number, string]> {
   return out;
 }
 
-/** A chord token, unwrapped from surrounding parentheses: "(D)" -> "D". */
+/**
+ * A chord token, unwrapped from surrounding parentheses and stripped of any
+ * trailing punctuation: "(D)" -> "D", "C7." -> "C7".
+ */
 function chordName(token: string): string {
-  const m = token.match(/^\((.+)\)$/);
-  return m ? m[1] : token;
+  const bare = token.replace(/[.,;:]+$/, '');
+  const m = bare.match(/^\((.+)\)$/);
+  return m ? m[1] : bare;
 }
 
 /**
@@ -158,6 +162,23 @@ function splitLabeledChords(
   return { label: labelParts.join(' ').replace(/:+$/, ''), chords };
 }
 
+/**
+ * A line that is just a section label on its own, e.g. "Verse", "Pre-Chorus",
+ * "Chorus:", or "Verse 2" -> "{c: ...}". Restricted to known section words so
+ * ordinary one-word lyric lines are left untouched.
+ */
+function asBareSectionLabel(line: string): string | null {
+  const trimmed = line.trim().replace(/:+$/, '');
+  if (!trimmed) return null;
+  const tokens = trimmed.split(/\s+/);
+  if (!isSectionLabel(tokens[0])) return null;
+  if (tokens.length === 1) return `{c: ${tokens[0]}}`;
+  if (tokens.length === 2 && /^\d+$/.test(tokens[1])) {
+    return `{c: ${tokens[0]} ${tokens[1]}}`;
+  }
+  return null;
+}
+
 const CAPO_FILLER = new Set([
   'capo', 'on', 'at', 'in', 'to', 'up', 'the', 'fret', 'frets', 'position', 'pos',
 ]);
@@ -220,6 +241,12 @@ export function convert(text: string, opts: ConvertOptions = {}): string {
     const capo = capoDirective(line);
     if (capo) {
       res.push(capo);
+      continue;
+    }
+
+    const bareSection = asBareSectionLabel(line);
+    if (bareSection) {
+      res.push(bareSection);
       continue;
     }
 
