@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Songbook Pro Formatter',
+  title: 'Songbook Pro · Formatter',
   description:
     'Convert chord charts from plain text or Ultimate Guitar into clean ChordPro.',
 };
