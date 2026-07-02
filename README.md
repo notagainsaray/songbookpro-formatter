@@ -332,7 +332,7 @@ songbookpro-formatter/
 ## Deploying to GitHub Pages
 
 The app is published as a static export on the `gh-pages` branch and served at
-<https://notagainsaray.github.io/songbookpro-formatter/>.
+the custom domain <https://songbook-formatter.pro/>.
 
 To (re)build and publish:
 
@@ -342,10 +342,13 @@ touch out/.nojekyll                 # serve _next/ as-is (skip Jekyll)
 npx gh-pages -d out -t -b gh-pages  # publish ./out to the gh-pages branch
 ```
 
-`GITHUB_PAGES=true` switches on `output: 'export'` and the `/songbookpro-formatter`
-base path in `next.config.ts`; without it, `npm run dev` and `npm run build`
-behave normally. In the repository's **Settings → Pages**, the source is set to
-the `gh-pages` branch.
+`GITHUB_PAGES=true` switches on `output: 'export'` in `next.config.ts`; without
+it, `npm run dev` and `npm run build` behave normally. `public/CNAME` carries the
+custom domain, and the repository's **Settings → Pages** source is the
+`gh-pages` branch.
+
+DNS (apex domain at the registrar): four `A` records pointing at GitHub's Pages
+IPs — `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`.
 
 ## License
 

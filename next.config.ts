@@ -1,13 +1,11 @@
 import type { NextConfig } from "next";
 import { readFileSync } from "node:fs";
 
-// When building for GitHub Pages (the deploy build sets GITHUB_PAGES=true),
-// the app is emitted as a static site served from the repository's subpath:
-// https://notagainsaray.github.io/songbookpro-formatter/. Locally and on other
-// hosts this stays off, so `next dev`, `next start`, and the tests are
-// unaffected.
+// When building for GitHub Pages (the deploy build sets GITHUB_PAGES=true), the
+// app is emitted as a static site served at the custom-domain root,
+// https://songbook-formatter.pro/. Locally and on other hosts this stays off,
+// so `next dev`, `next start`, and the tests are unaffected.
 const isPages = process.env.GITHUB_PAGES === "true";
-const repo = "songbookpro-formatter";
 const pkg = JSON.parse(readFileSync("./package.json", "utf8"));
 
 const nextConfig: NextConfig = {
@@ -28,9 +26,9 @@ const nextConfig: NextConfig = {
 
 if (isPages) {
   nextConfig.output = "export"; // static HTML/CSS/JS into ./out
-  nextConfig.basePath = `/${repo}`; // project site lives under /<repo>
   nextConfig.images = { unoptimized: true }; // no image optimizer in a static export
   nextConfig.trailingSlash = true; // emit an index.html per route for static hosting
+  // No basePath: the custom domain serves the app at the root.
 }
 
 export default nextConfig;
