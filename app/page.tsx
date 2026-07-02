@@ -40,6 +40,12 @@ export default function Home() {
     setOutput(convert(input, { snap, prog }));
   }
 
+  // Convert live as the user types or pastes, so no button click is needed.
+  function handleInput(value: string) {
+    setInput(value);
+    setOutput(convert(value, { snap, prog }));
+  }
+
   function toggleSnap() {
     const next = !snap;
     setSnap(next);
@@ -173,7 +179,7 @@ export default function Home() {
             spellCheck={false}
             placeholder={PLACEHOLDER}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => handleInput(e.target.value)}
           />
         </div>
         <div className="pane">
