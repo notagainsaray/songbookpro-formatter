@@ -69,12 +69,17 @@ export default function Home() {
   }
 
   async function copyOutput() {
-    if (!output.trim()) {
+    // Copy the formatted output for whatever is currently in the input,
+    // converting on the fly so it works even before "Convert" is clicked (and
+    // stays in sync if the input was edited afterwards).
+    const formatted = convert(input, { snap, prog });
+    if (!formatted.trim()) {
       ping('Nothing to copy');
       return;
     }
+    setOutput(formatted);
     try {
-      await navigator.clipboard.writeText(output);
+      await navigator.clipboard.writeText(formatted);
       ping('Copied');
     } catch {
       ping('Copy failed');
