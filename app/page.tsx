@@ -3,6 +3,10 @@
 import { useState, type ReactNode } from 'react';
 import { convert } from '@/lib/converter';
 
+const REPO = 'https://github.com/notagainsaray/songbookpro-formatter';
+const VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? 'dev';
+const COMMIT = process.env.NEXT_PUBLIC_COMMIT ?? '';
+
 const PLACEHOLDER = `Paste your chart here, e.g.
 
         C            G
@@ -206,6 +210,24 @@ export default function Home() {
         a chord as{' '}
         <span style={{ color: 'var(--chord)' }}>[Dm7 (play twice)]</span>.
       </div>
+
+      <footer className="ver">
+        <a href={`${REPO}/releases`} target="_blank" rel="noreferrer">
+          Songbook Pro Formatter v{VERSION}
+        </a>
+        {COMMIT ? (
+          <>
+            {' · '}
+            <a
+              href={`${REPO}/commit/${COMMIT}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {COMMIT}
+            </a>
+          </>
+        ) : null}
+      </footer>
 
       {toast && <div className="toast show">{toast}</div>}
     </div>
